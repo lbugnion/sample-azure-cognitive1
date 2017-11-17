@@ -2,7 +2,7 @@
 
 This sample shows how to create a blob triggered Azure function in the Azure portal, configure it for input/output, and implement code using Azure cognitive services to create smart thumbnails.
 
-The artificial intelligence analyzes the image and create a cropped version that makes sure that relevant information is displayed.
+The artificial intelligence analyzes the image and creates a cropped version that makes sure that relevant information is displayed.
 
 This article assumes that you already have an Azure subscription. If you don't, [you can one for free](https://github.com/lbugnion/sample-azure-general/blob/master/Doc/trial-account.md).
 
@@ -58,6 +58,8 @@ After you [created the function application](./creating.md), you can now create 
 
 8. In the blade opening, select the Storage account that you want to use. This is the same storage account that we configured earlier in the "Configuring the blob containers" section.
 
+![Storage account](TODO_IMAGE)
+
 9. Once everything is ready, click on the Create button.
 
 Now we will configure the output blob container. We can do this at any time from the function's portal.
@@ -103,7 +105,86 @@ public static void Run(
 }
 ```
 
-## Code sample 1: Smart thumbnail with Blob Trigger
+3. Press the Save button in the code editor. Check the Logs area, it should show that the code was compiled without errors (after a few seconds).
+
+4. Move to the Azure Storage Explorer and select the Upload button in the toolbar.
+
+TODO REDO THIS PICTURE WITH CORRECT FOLDER NAME
+![Upload button](./Img/2017-11-15_08-46-14.png)
+
+5. In the Upload files dialog, press the `...` and select an image file. Then press on the Upload button.
+
+TODO REDO THIS PICTURE
+![Upload files dialog](./Img/2017-11-15_08-49-05.png)
+
+6. In the Azure Portal window, check the logs again. After a short wait, you should see the log messages showing up as shown below
+
+![Log window in the Azure Portal](TODO_IMAGE)
+
+## Getting the cognitive service API key
+
+TODO
+
+## Implementing the final code
+
+Now is the time to implement the code creating the smart thumbnail. Follow the steps:
+
+1. First, we will define a few constants. Replace the content of the ```Run``` method with the following attributes:
+
+```CS
+int width = 320;
+int height = 320;
+bool smartCropping = true;
+string _apiKey = "[YOUR API KEY]]";
+string _apiUrlBase = "[YOUR SERVICE URL]";
+```
+
+2. In the code, replace ```[YOUR API KEY]``` with the key that you obtained in the previous section. Also replace ```[YOUR SERVICE KEY]``` with the URL of the service corresponding to the key.
+
+> Note: You need to use the URL of the service corresponding to the key that you obtained in the previous section. Other keys or URLs won't work.
+
+3. Add the following code creating and initializing the HTTP Client that we will use to call the cognitive services. Note how the API key is set in the header of the HTTP client.
+
+```CS
+using (var httpClient = new HttpClient())
+{
+    httpClient.BaseAddress = new Uri(_apiUrlBase);
+    httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _apiKey);
+
+}
+```
+
+4. In the same ```using``` block, add the following code. This creates a ```StreamContent``` that we will POST to the cognitive service.
+
+```CS
+using (HttpContent content = new StreamContent(inBlob))
+{
+    //get response
+    content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream");
+
+}
+```
+
+5. In that ```using``` section, add the code creating the URL including all the parameters. This information can be found in the [cognitive service's documentation](TODO LINK). Then we POST the image to the service and get the response asynchronously.
+
+TODO TRY AWAIT IN THIS CODE AND UPDATE EVERYWHERE
+
+```CS
+var uri = $"{_apiUrlBase}?width={width}&height={height}&smartCropping={smartCropping.ToString()}";
+var response = httpClient.PostAsync(uri, content).Result;
+var responseBytes = response.Content.ReadAsByteArrayAsync().Result;
+```
+
+6. Finally as the last operation, we copy the output image to the output blob container with the following operation. Note how saving the blob is as simple as writing to the output Stream.
+
+```CS
+//write to output thumb
+outBlob.Write(responseBytes, 0, responseBytes.Length);
+```
+
+## Full code
+
+Here is the full code for the function. Simply copying/pasting the code below in the code window, saving, checking that the compilation succeeded and then uploading an image file to the blob container to check if the code works. Happy coding and testing!
 
 ```CS
 public static async Task Run(
@@ -114,13 +195,14 @@ public static async Task Run(
     int width = 320;
     int height = 320;
     bool smartCropping = true;
-    string _apiKey = "22b1286a2f414d3b80bcb7a0e59c9206";
-    string _apiUrlBase = "https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/generateThumbnail";
+    string _apiKey = "[YOUR API KEY]]";
+    string _apiUrlBase = "[YOUR SERVICE URL]";
 
     using (var httpClient = new HttpClient())
     {
         httpClient.BaseAddress = new Uri(_apiUrlBase);
         httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _apiKey);
+
         using (HttpContent content = new StreamContent(inBlob))
         {
             //get response
