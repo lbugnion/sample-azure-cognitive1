@@ -1,10 +1,10 @@
 # Smart creation of a thumbnail using Azure Cognitive Services
 
-This sample shows how to create a blob triggered Azure function in the Azure portal, configure it for input/output, and implement code using Azure cognitive services to create smart thumbnails.
+This sample shows how to create a blob triggered Azure function in the Azure portal, configure it for input/output, and implement code using Azure cognitive services to **create smart thumbnails**.
 
 The artificial intelligence analyzes the image and creates a cropped version that makes sure that relevant information is displayed.
 
-This article assumes that you already have an Azure subscription. If you don't, [you can one for free](https://github.com/lbugnion/sample-azure-general/blob/master/Doc/trial-account.md).
+This article assumes that you already have an Azure subscription. If you don't, [you can get one for free](https://github.com/lbugnion/sample-azure-general/blob/master/Doc/trial-account.md).
 
 ## Configuring the blob containers
 

@@ -1,10 +1,10 @@
 # Handwritten text recognition using Azure Cognitive Services
 
-This sample shows how to create a blob triggered Azure function in the Azure portal, configure it for input/output, and implement code using Azure cognitive services to recognize handwritten text in an image.
+This sample shows how to create a blob triggered Azure function in the Azure portal, configure it for input/output, and implement code using Azure cognitive services to **recognize handwritten text in an image**.
 
 The artificial intelligence analyzes the image and creates a JSON file with the words that were recognized as well as positional information about the words in the image.
 
-This article assumes that you already have an Azure subscription. If you don't, [you can one for free](https://github.com/lbugnion/sample-azure-general/blob/master/Doc/trial-account.md).
+This article assumes that you already have an Azure subscription. If you don't, [you can get one for free](https://github.com/lbugnion/sample-azure-general/blob/master/Doc/trial-account.md).
 
 ## Configuring the blob containers
 
