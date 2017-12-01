@@ -56,9 +56,9 @@ After you [created the function application](./creating.md), you can now create 
 
 ![Configuring the storage account](./Img/2017-11-16_16-56-38.png)
 
-8. In the blade opening, select the Storage account that you want to use. This is the same storage account that we configured earlier in the "Configuring the blob containers" section.
+8. In the blade opening on the right, select the Storage account that you want to use. This is the same storage account that we configured earlier in the "Configuring the blob containers" section.
 
-![Storage account](TODO_IMAGE)
+![Storage account](./Img/2017-11-27_10-15-25.png)
 
 9. Once everything is ready, click on the Create button.
 
@@ -66,7 +66,7 @@ Now we will configure the output blob container. We can do this at any time from
 
 10. Click on the Integrate menu in the function's tree. In this menu you can see the properties that you entered earlier for the input blob.
 
-![Monitor](./Img/2017-11-16_17-00-51.png)
+![Integrate](./Img/2017-11-16_17-00-51.png)
 
 11. Click on New Output
 
@@ -90,10 +90,10 @@ Now we are ready to code the function. First we will quickly test to see if ever
 
 1. Click on the ```Resize``` function name. You should now see the code editor on the right hand side.
 
-2. Replace the content of the code editor with the following code:
+2. Replace the content of the code editor with the following code. Note that we use an asynchronous signature because we will use the await keyword later for the full implementation.
 
 ```CS
-public static void Run(
+public static async Task Run(
     Stream myBlob, 
     string name, 
     Stream outputBlob, 
@@ -101,7 +101,6 @@ public static void Run(
 {
     log.Info($"Processed blob\n Name:{name} \n Size: {myBlob.Length} Bytes");
     myBlob.CopyTo(outputBlob);
-    log.Info($"Copied to output. Size: {outputBlob.Length} Bytes");
 }
 ```
 
@@ -109,25 +108,23 @@ public static void Run(
 
 4. Move to the Azure Storage Explorer and select the Upload button in the toolbar.
 
-TODO REDO THIS PICTURE WITH CORRECT FOLDER NAME
-![Upload button](./Img/2017-11-15_08-46-14.png)
+![Upload button](./Img/2017-11-27_14-17-14.png)
 
 5. In the Upload files dialog, press the `...` and select an image file. Then press on the Upload button.
 
-TODO REDO THIS PICTURE
 ![Upload files dialog](./Img/2017-11-15_08-49-05.png)
 
 6. In the Azure Portal window, check the logs again. After a short wait, you should see the log messages showing up as shown below
 
-![Log window in the Azure Portal](TODO_IMAGE)
+![Log window in the Azure Portal](./Img/2017-11-30_18-37-20.png)
 
-## Getting the cognitive service API key
+## Getting the cognitive service API key and URL
 
 TODO
 
 ## Implementing the final code
 
-Now is the time to implement the code creating the smart thumbnail. Follow the steps:
+Now is the time to implement the code creating the smart thumbnail. You can see the full function code below in the "Full code" section. Follow the steps:
 
 1. First, we will define a few constants. Replace the content of the ```Run``` method with the following attributes:
 
@@ -135,7 +132,7 @@ Now is the time to implement the code creating the smart thumbnail. Follow the s
 int width = 320;
 int height = 320;
 bool smartCropping = true;
-string _apiKey = "[YOUR API KEY]]";
+string _apiKey = "[YOUR API KEY]";
 string _apiUrlBase = "[YOUR SERVICE URL]";
 ```
 
@@ -151,10 +148,11 @@ using (var httpClient = new HttpClient())
     httpClient.BaseAddress = new Uri(_apiUrlBase);
     httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _apiKey);
 
+    // CONTINUE HERE
 }
 ```
 
-4. In the same ```using``` block, add the following code. This creates a ```StreamContent``` that we will POST to the cognitive service.
+4. In the same ```using``` block, where the comment ```CONTINUE HERE``` stands, add the following code. This creates a ```StreamContent``` that we will POST to the cognitive service.
 
 ```CS
 using (HttpContent content = new StreamContent(inBlob))
@@ -162,17 +160,18 @@ using (HttpContent content = new StreamContent(inBlob))
     //get response
     content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream");
 
+    // CONTINUE HERE
 }
 ```
 
-5. In that ```using``` section, add the code creating the URL including all the parameters. This information can be found in the [cognitive service's documentation](TODO LINK). Then we POST the image to the service and get the response asynchronously.
+5. In that ```using``` section, near the ```CONTINUE HERE``` comment, add the code creating the URL including all the parameters. This information can be found in the [cognitive service's documentation](TODO LINK). Then we POST the image to the service and get the response asynchronously.
 
 TODO TRY AWAIT IN THIS CODE AND UPDATE EVERYWHERE
 
 ```CS
 var uri = $"{_apiUrlBase}?width={width}&height={height}&smartCropping={smartCropping.ToString()}";
-var response = httpClient.PostAsync(uri, content).Result;
-var responseBytes = response.Content.ReadAsByteArrayAsync().Result;
+var response = await httpClient.PostAsync(uri, content)t;
+var responseBytes = await response.Content.ReadAsByteArrayAsync();
 ```
 
 6. Finally as the last operation, we copy the output image to the output blob container with the following operation. Note how saving the blob is as simple as writing to the output Stream.
@@ -182,38 +181,56 @@ var responseBytes = response.Content.ReadAsByteArrayAsync().Result;
 outBlob.Write(responseBytes, 0, responseBytes.Length);
 ```
 
+## Testing the function
+
+Now we can test the function. To do this, start the [Azure Storage Explorer](https://github.com/lbugnion/sample-azure-general/blob/master/Doc/azure-explorer.md). Then follow the steps:
+
+1. Navigate to the blob container that you created earlier: ```images-original```.
+
+2. Upload a picture like we did before. For example, here is an original picture:
+
+![Microsoft EVP Scott Guthrie](./Img/DSC02731.JPG)
+
+3. Observe the log section in the web portal. After a short wait, you should see that the function is executed and succeeded.
+
+4. Using the Azure Storage Explore3r, open the ```images-thumbs``` blob container. You should find a new image there with the same name as the one you just uploaded. In our case, here is the thumbnail create by the artificial intelligence:
+
+![Microsoft EVP Scott Guthrie](./Img/DSC02731A.JPG)
+
 ## Full code
 
 Here is the full code for the function. Simply copying/pasting the code below in the code window, saving, checking that the compilation succeeded and then uploading an image file to the blob container to check if the code works. Happy coding and testing!
 
 ```CS
 public static async Task Run(
-    Stream inBlob,
-    Stream outBlob, 
+    Stream myBlob, 
+    string name, 
+    Stream outputBlob, 
     TraceWriter log)
 {
     int width = 320;
     int height = 320;
     bool smartCropping = true;
-    string _apiKey = "[YOUR API KEY]]";
-    string _apiUrlBase = "[YOUR SERVICE URL]";
+    string _apiKey = "22b1286a2f414d3b80bcb7a0e59c9206";
+    string _apiUrlBase = "https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/generateThumbnail";
 
     using (var httpClient = new HttpClient())
     {
         httpClient.BaseAddress = new Uri(_apiUrlBase);
         httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _apiKey);
 
-        using (HttpContent content = new StreamContent(inBlob))
+        using (HttpContent content = new StreamContent(myBlob))
         {
             //get response
             content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream");
+
             var uri = $"{_apiUrlBase}?width={width}&height={height}&smartCropping={smartCropping.ToString()}";
-            var response = httpClient.PostAsync(uri, content).Result;
-            var responseBytes = response.Content.ReadAsByteArrayAsync().Result;
+            var response = await httpClient.PostAsync(uri, content);
+            var responseBytes = await response.Content.ReadAsByteArrayAsync();
 
             //write to output thumb
-            outBlob.Write(responseBytes, 0, responseBytes.Length);
+            outputBlob.Write(responseBytes, 0, responseBytes.Length);            
         }
-    }
+    }    
 }
 ```

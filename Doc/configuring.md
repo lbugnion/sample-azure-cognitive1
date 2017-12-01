@@ -8,6 +8,12 @@ In this section, we will use the Microsoft Azure Storage Explorer to configure t
 
 3. Expand the Blob containers node.
 
-4. Right click on Blob containers and select
+4. Right click on Blob containers and select Create Blob Cotainer
 
 ![Creating a blob container](./Img/2017-11-16_16-17-47.png)
+
+5. Enter a name for the new input blob container, for example ```test-in```
+
+6. Repeat the steps to create another blob container for the output, for example ```test-out```
+
+You're done! Remember the names ```test-in``` and ```test-out``` because you will need them when you create the functions.

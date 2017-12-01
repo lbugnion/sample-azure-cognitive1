@@ -16,7 +16,7 @@ In this section, we will use the Microsoft Azure Storage Explorer to configure t
 
 3. Expand the Blob containers node.
 
-4. Right click on Blob containers and select Create Blob Cotainer
+4. Right click on Blob containers and select Create Blob Container
 
 ![Creating a blob container](./Img/2017-11-16_16-17-47.png)
 
@@ -46,13 +46,11 @@ After you [created the function application](./creating.md), you can now create 
 
 ![Blob trigger with C#](./Img/2017-11-16_12-15-04.png)
 
-5. Enter a name for your function, for example ```RecognizeText```
-
-TODO CHECK THE FUNCTION'S NAME
+5. Enter a name for your function, for example ```ExtractText```
 
 6. Enter the path of the Azure blob storage container. This is only for the trigger, aka the "input blob". We will configure the output blob later. In our case, we use ```images-text/{name}```. Note that the ```{name}``` parameter will be the name of the file that you upload, which can be useful in the function.
 
-![Configuring the name and Path](./Img/TODO_IMAGE)
+![Configuring the name and Path](./Img/2017-11-27_10-13-58.png)
 
 7. Next to the "Storage account connection" combo box, click on New
 
@@ -60,7 +58,7 @@ TODO CHECK THE FUNCTION'S NAME
 
 8. In the blade opening, select the Storage account that you want to use. This is the same storage account that we configured earlier in the "Configuring the blob containers" section.
 
-![Storage account](TODO_IMAGE)
+![Storage account](./Img/2017-11-27_10-15-25.png)
 
 9. Once everything is ready, click on the Create button.
 
@@ -68,7 +66,7 @@ Now we will configure the output blob container. We can do this at any time from
 
 10. Click on the Integrate menu in the function's tree. In this menu you can see the properties that you entered earlier for the input blob.
 
-![Monitor](./Img/2017-11-16_17-00-51.png)
+![Integrate](./Img/2017-11-27_14-09-42.png)
 
 11. Click on New Output
 
@@ -80,11 +78,15 @@ Now we will configure the output blob container. We can do this at any time from
 
 13. If needed, you can change the name of the output blob parameter. This is what you will use in the Function to write to the Stream.
 
-14. Change the path of the output container. In our sample we use ```images-thumbs/{name}```
+14. Change the path of the output container. In our sample we use ```images-text-out/{name}```
 
 15. Under Storage account connection, select the same connection than you selected for the input blob. Then click the Save button.
 
-![Configuring the output blob container](./Img/2017-11-16_17-06-39.png)
+![Configuring the output blob container](./Img/2017-11-27_14-13-10.png)
+
+
+
+
 
 
 
