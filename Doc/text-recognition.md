@@ -56,7 +56,7 @@ After you [created the function application](./creating.md), you can now create 
 
 ![Configuring the storage account](./Img/2017-11-16_16-56-38.png)
 
-8. In the blade opening, select the Storage account that you want to use. This is the same storage account that we configured earlier in the "Configuring the blob containers" section.
+8. In the blade opening on the right, select the Storage account that you want to use. This is the same storage account that we configured earlier in the "Configuring the blob containers" section.
 
 ![Storage account](./Img/2017-11-27_10-15-25.png)
 
@@ -84,68 +84,151 @@ Now we will configure the output blob container. We can do this at any time from
 
 ![Configuring the output blob container](./Img/2017-11-27_14-13-10.png)
 
+## Implementing the Function
 
+Now we are ready to code the function. First we will quickly test to see if everything is configured propoerly.
 
+1. Click on the ```ExtractText``` function name. You should now see the code editor on the right hand side.
 
-
-
-
-
-
-## Code sample 2: Extracting handwritten text using blob trigger
+2. Replace the content of the code editor with the following code. Note that we use an asynchronous signature because we will use the await keyword later for the full implementation.
 
 ```CS
-public static async Task Run(Stream inBlob, Stream outBlob, TraceWriter log)
+public static async Task Run(
+    Stream myBlob, 
+    string name, 
+    Stream outputBlob, 
+    TraceWriter log)
 {
+    log.Info($"Processed blob\n Name:{name} \n Size: {myBlob.Length} Bytes");
+    myBlob.CopyTo(outputBlob);
+}
+```
+
+3. Press the Save button in the code editor. Check the Logs area, it should show that the code was compiled without errors (after a few seconds).
+
+4. Move to the Azure Storage Explorer and select the Upload button in the toolbar.
+
+![Upload button](./Img/2017-11-27_14-17-14.png)
+
+5. In the Upload files dialog, press the `...` and select an image file. Then press on the Upload button.
+
+![Upload files dialog](./Img/2017-11-15_08-49-05.png)
+
+6. In the Azure Portal window, check the logs again. After a short wait, you should see the log messages showing up as shown below
+
+![Log window in the Azure Portal](./Img/2017-11-30_18-37-20.png)
+
+## Getting the cognitive service API key and URL
+
+TODO
+
+## Implementing the final code
+
+Now is the time to implement the code creating the smart thumbnail. You can see the full function code below in the "Full code" section. Follow the steps:
+
+1. First, we will define a few constants. Replace the content of the ```Run``` method with the following attributes:
+
+```CS
+int width = 320;
+int height = 320;
+bool smartCropping = true;
+string _apiKey = "[YOUR API KEY]";
+string _apiUrlBase = "[YOUR SERVICE URL]";
+```
+
+2. In the code, replace ```[YOUR API KEY]``` with the key that you obtained in the previous section. Also replace ```[YOUR SERVICE KEY]``` with the URL of the service corresponding to the key.
+
+> Note: You need to use the URL of the service corresponding to the key that you obtained in the previous section. Other keys or URLs won't work.
+
+3. Add the following code creating and initializing the HTTP Client that we will use to call the cognitive services. Note how the API key is set in the header of the HTTP client.
+
+```CS
+using (var httpClient = new HttpClient())
+{
+    httpClient.BaseAddress = new Uri(_apiUrlBase);
+    httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _apiKey);
+
+    // CONTINUE HERE
+}
+```
+
+4. In the same ```using``` block, where the comment ```CONTINUE HERE``` stands, add the following code. This creates a ```StreamContent``` that we will POST to the cognitive service.
+
+```CS
+using (HttpContent content = new StreamContent(inBlob))
+{
+    //get response
+    content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream");
+
+    // CONTINUE HERE
+}
+```
+
+5. In that ```using``` section, near the ```CONTINUE HERE``` comment, add the code creating the URL including all the parameters. This information can be found in the [cognitive service's documentation](TODO LINK). Then we POST the image to the service and get the response asynchronously.
+
+```CS
+var uri = $"{_apiUrlBase}?width={width}&height={height}&smartCropping={smartCropping.ToString()}";
+var response = await httpClient.PostAsync(uri, content)t;
+var responseBytes = await response.Content.ReadAsByteArrayAsync();
+```
+
+6. Finally as the last operation, we copy the output image to the output blob container with the following operation. Note how saving the blob is as simple as writing to the output Stream.
+
+```CS
+//write to output thumb
+outBlob.Write(responseBytes, 0, responseBytes.Length);
+```
+
+## Testing the function
+
+Now we can test the function. To do this, start the [Azure Storage Explorer](https://github.com/lbugnion/sample-azure-general/blob/master/Doc/azure-explorer.md). Then follow the steps:
+
+1. Navigate to the blob container that you created earlier: ```images-original```.
+
+2. Upload a picture like we did before. For example, here is an original picture:
+
+![Microsoft EVP Scott Guthrie](./Img/DSC02731.JPG)
+
+3. Observe the log section in the web portal. After a short wait, you should see that the function is executed and succeeded.
+
+4. Using the Azure Storage Explore3r, open the ```images-thumbs``` blob container. You should find a new image there with the same name as the one you just uploaded. In our case, here is the thumbnail create by the artificial intelligence:
+
+![Microsoft EVP Scott Guthrie](./Img/DSC02731A.JPG)
+
+## Full code
+
+Here is the full code for the function. Simply copying/pasting the code below in the code window, saving, checking that the compilation succeeded and then uploading an image file to the blob container to check if the code works. Happy coding and testing!
+
+```CS
+public static async Task Run(
+    Stream myBlob, 
+    string name, 
+    Stream outputBlob, 
+    TraceWriter log)
+{
+    int width = 320;
+    int height = 320;
+    bool smartCropping = true;
     string _apiKey = "22b1286a2f414d3b80bcb7a0e59c9206";
-    string _apiUrlBase = "https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/recognizeText";
+    string _apiUrlBase = "https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/generateThumbnail";
 
     using (var httpClient = new HttpClient())
     {
         httpClient.BaseAddress = new Uri(_apiUrlBase);
         httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _apiKey);
-        using (HttpContent content = new StreamContent(inBlob))
+
+        using (HttpContent content = new StreamContent(myBlob))
         {
             //get response
             content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream");
-            var uri = $"{_apiUrlBase}?handwriting=true";
-            var response = httpClient.PostAsync(uri, content).Result;
 
-            string operationLocation = null;
+            var uri = $"{_apiUrlBase}?width={width}&height={height}&smartCropping={smartCropping.ToString()}";
+            var response = await httpClient.PostAsync(uri, content);
+            var responseBytes = await response.Content.ReadAsByteArrayAsync();
 
-            // The response contains the URI to retrieve the result of the process.
-            if (response.IsSuccessStatusCode)
-            {
-                operationLocation = response.Headers.GetValues("Operation-Location").FirstOrDefault();
-            }
-            else
-            {
-                log.Error("Operation failed");
-                return;
-            }
-
-            string contentString;
-            int i = 0;
-            do
-            {
-                System.Threading.Thread.Sleep(1000);
-                response = await httpClient.GetAsync(operationLocation);
-                contentString = await response.Content.ReadAsStringAsync();
-                ++i;
-            }
-            while (i < 10 && contentString.IndexOf("\"status\":\"Succeeded\"") == -1);
-
-            if (i == 10 && contentString.IndexOf("\"status\":\"Succeeded\"") == -1)
-            {
-                log.Error("\nTimeout error.\n");
-                return;
-            }
-
-            using (var writer = new StreamWriter(outBlob))
-            {
-                writer.Write(contentString);
-            }
+            //write to output thumb
+            outputBlob.Write(responseBytes, 0, responseBytes.Length);            
         }
-    }
+    }    
 }
 ```

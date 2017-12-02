@@ -16,7 +16,7 @@ In this section, we will use the Microsoft Azure Storage Explorer to configure t
 
 3. Expand the Blob containers node.
 
-4. Right click on Blob containers and select Create Blob Cotainer
+4. Right click on Blob containers and select Create Blob Container
 
 ![Creating a blob container](./Img/2017-11-16_16-17-47.png)
 
@@ -120,7 +120,30 @@ public static async Task Run(
 
 ## Getting the cognitive service API key and URL
 
-TODO
+In order to call the Azure cognitive services, we will need a key and a URL. All the Azure services are exposed through REST URLs which are really easy to call. However we need a little bit of setup first. 
+
+1. Go to the Cognitive services homepage at [https://azure.microsoft.com/en-us/services/cognitive-services](https://azure.microsoft.com/en-us/services/cognitive-services).
+
+2. Click on the "Try Cognitive Services for free" button.
+
+[![Try Cognitive Services](./Img/2017-12-01_20-02-12.png)](https://azure.microsoft.com/en-us/try/cognitive-services)
+
+3. Under "Computer Vision API", click the "Get API Key" button.
+
+4. Agree to the terms and services, and select your region. Then click on Next
+
+5. Sign into the service. You can you a Microsoft Account (MSA), LinkedIn, Facebook or Github.
+
+6. After you are authenticated, copy the following values:
+
+- Endpoint
+- Key 1
+
+You won't need the second API key here.
+
+![Computer Vision API settings](./Img/2017-12-01_20-20-46.png)
+
+The two values that you just copied will be used in the function implementation below.
 
 ## Implementing the final code
 
@@ -133,10 +156,10 @@ int width = 320;
 int height = 320;
 bool smartCropping = true;
 string _apiKey = "[YOUR API KEY]";
-string _apiUrlBase = "[YOUR SERVICE URL]";
+string _apiUrlBase = "[YOUR ENDPOINT URL]";
 ```
 
-2. In the code, replace ```[YOUR API KEY]``` with the key that you obtained in the previous section. Also replace ```[YOUR SERVICE KEY]``` with the URL of the service corresponding to the key.
+2. In the code, replace ```[YOUR API KEY]``` with the key that you obtained in the previous section. Also replace ```[YOUR ENDPOINT KEY]``` with the URL of the service corresponding to the key.
 
 > Note: You need to use the URL of the service corresponding to the key that you obtained in the previous section. Other keys or URLs won't work.
 
@@ -166,8 +189,6 @@ using (HttpContent content = new StreamContent(inBlob))
 
 5. In that ```using``` section, near the ```CONTINUE HERE``` comment, add the code creating the URL including all the parameters. This information can be found in the [cognitive service's documentation](TODO LINK). Then we POST the image to the service and get the response asynchronously.
 
-TODO TRY AWAIT IN THIS CODE AND UPDATE EVERYWHERE
-
 ```CS
 var uri = $"{_apiUrlBase}?width={width}&height={height}&smartCropping={smartCropping.ToString()}";
 var response = await httpClient.PostAsync(uri, content)t;
@@ -195,7 +216,7 @@ Now we can test the function. To do this, start the [Azure Storage Explorer](htt
 
 4. Using the Azure Storage Explore3r, open the ```images-thumbs``` blob container. You should find a new image there with the same name as the one you just uploaded. In our case, here is the thumbnail create by the artificial intelligence:
 
-![Microsoft EVP Scott Guthrie](./Img/DSC02731A.JPG)
+![Microsoft EVP Scott Guthrie, tnumbnail](./Img/DSC02731A.JPG)
 
 ## Full code
 
@@ -211,8 +232,8 @@ public static async Task Run(
     int width = 320;
     int height = 320;
     bool smartCropping = true;
-    string _apiKey = "22b1286a2f414d3b80bcb7a0e59c9206";
-    string _apiUrlBase = "https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/generateThumbnail";
+    string _apiKey = "[YOUR API KEY]";
+    string _apiUrlBase = "[YOUR ENDPOINT URL]";
 
     using (var httpClient = new HttpClient())
     {
