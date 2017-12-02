@@ -18,8 +18,6 @@ Hopefully these samples are useful to understand blob triggered Azure functions 
 
 1. [Creating the function application in the portal](./Doc/creating.md)
 
-2. [Configuring the blob containers](./Doc/configuring.md)
+2. [Smart creation of a thumbnail using Azure Cognitive Services](./Doc/thumbnail.md)
 
-3. [Smart creation of a thumbnail using Azure Cognitive Services](./Doc/thumbnail.md)
-
-4. [Handwritten text recognition using Azure Cognitive Services](./Doc/text-recognition.md)
+3. [Handwritten text recognition using Azure Cognitive Services](./Doc/text-recognition.md)
