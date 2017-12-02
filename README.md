@@ -6,7 +6,7 @@ In this sample, I will describe how to create two Azure functions in the Azure w
 
 - [Smart creation of a thumbnail](./Doc/thumbnail.md)
 
-- [Handwritten text recognition](./Doc/text-recgnition.md)
+- [Handwritten text recognition](./Doc/text-recognition.md)
 
 We use an Azure Function with a blob trigger to execute the code. Of course it would be easy to adapt this sample to call other cognitive services, or to change the trigger and the output, for example to use an [HTTP triggered function](https://github.com/lbugnion/sample-azure-general/blob/master/Doc/functions-http.md) with a POST request, or any other desired scenario.
 
