@@ -18,7 +18,7 @@
 - Hosting plan: You can start with a Consumption plan, where your function will only be billed when it is used. Later if usage is growing, you can select an App service plan instead.
 - Location: Select a data center close to your users.
 - Storage: Create a new storage account where the blob containers will be placed, or select an existing one. It makes sense for the storage account to be in the same region as the function itself.
-- Applicationj Insights: Turn this on if you want to use additional analytics on your function's usage.
+- Applications Insights: Turn this on if you want to use additional analytics on your function's usage.
 
 5. Click on Create.
 
@@ -28,6 +28,6 @@
 
 You can see two examples here:
 
-- [Smart creation of a thumbnail using Azure Cognitive Services](./Doc/thumbnail.md)
+- [Smart creation of a thumbnail using Azure Cognitive Services](./thumbnail.md)
 
-- [Handwritten text recognition using Azure Cognitive Services](./Doc/text-recognition.md)
+- [Handwritten text recognition using Azure Cognitive Services](./text-recognition.md)
