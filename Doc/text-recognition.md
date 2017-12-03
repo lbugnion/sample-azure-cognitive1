@@ -1,5 +1,8 @@
 # Handwritten text recognition using Azure Cognitive Services
 
+> Note: Before you go on, did you check [
+Creating the function application in the portal](./creating.md) ?
+
 This sample shows how to create a blob triggered Azure function in the Azure portal, configure it for input/output, and implement code using Azure cognitive services to **recognize handwritten text in an image**.
 
 The artificial intelligence analyzes the image and creates a JSON file with the words that were recognized as well as positional information about the words in the image.
@@ -48,7 +51,7 @@ After you [created the function application](./creating.md), you can now create 
 
 5. Enter a name for your function, for example ```ExtractText```
 
-6. Enter the path of the Azure blob storage container. This is only for the trigger, aka the "input blob". We will configure the output blob later. In our case, we use ```images-text/{name}```. Note that the ```{name}``` parameter will be the name of the file that you upload, which can be useful in the function.
+6. Enter the path of the Azure blob storage container. This is only for the trigger, aka the "input blob". We will configure the output blob later. In our case, we use ```images-text/{name}.txt```. Note that the ```{name}``` parameter will be the name of the file that you upload, which can be useful in the function.
 
 ![Configuring the name and Path](./Img/2017-11-27_10-13-58.png)
 
@@ -78,7 +81,7 @@ Now we will configure the output blob container. We can do this at any time from
 
 13. If needed, you can change the name of the output blob parameter. This is what you will use in the Function to write to the Stream.
 
-14. Change the path of the output container. In our sample we use ```images-text-out/{name}```
+14. Change the path of the output container. In our sample we use ```images-text-out/{name}.txt```. Note that we added a ```.txt``` extension because the resulting file will be a text file containing some JSON.
 
 15. Under Storage account connection, select the same connection than you selected for the input blob. Then click the Save button.
 
@@ -99,8 +102,10 @@ public static async Task Run(
     Stream outputBlob, 
     TraceWriter log)
 {
-    log.Info($"Processed blob\n Name:{name} \n Size: {myBlob.Length} Bytes");
-    myBlob.CopyTo(outputBlob);
+    using (var writer = new StreamWriter(outputBlob))
+    {
+        writer.Write($"Found blob {name} with {myBlob.Length} bytes");
+    }
 }
 ```
 
@@ -118,9 +123,35 @@ public static async Task Run(
 
 ![Log window in the Azure Portal](./Img/2017-11-30_18-37-20.png)
 
+7. Open the Azure Storage Explorer and navigate to the ```images-text-out``` blob container.
+
+8. Find the file with the same name as the image you just uploaded, and the ```txt``` extension. You can double click this file to open it and you should see text corresponding to our code here above.
+
 ## Getting the cognitive service API key and URL
 
-TODO
+In order to call the Azure cognitive services, we will need a key and a URL. All the Azure services are exposed through REST URLs which are really easy to call. However we need a little bit of setup first. 
+
+1. Go to the Cognitive services homepage at [https://azure.microsoft.com/en-us/services/cognitive-services](https://azure.microsoft.com/en-us/services/cognitive-services).
+
+2. Click on the "Try Cognitive Services for free" button.
+
+[![Try Cognitive Services](./Img/2017-12-01_20-02-12.png)](https://azure.microsoft.com/en-us/try/cognitive-services)
+
+3. Under "Computer Vision API", click the "Get API Key" button.
+
+4. Agree to the terms and services, and select your region. Then click on Next
+
+5. Sign into the service. You can you a Microsoft Account (MSA), LinkedIn, Facebook or Github.
+
+6. After you are authenticated, copy the Key 1. You won't need the second API key here.
+
+7. Also copy the Endpoint URL.
+
+> Note: In your code, you must add the ```recognizeText``` API name to [YOUR ENDPOINT URL]. For example a valid endpoint URL could be ```https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/recognizeText```
+
+![Computer Vision API settings](./Img/2017-12-01_20-20-46.png)
+
+The two values that you just copied will be used in the function implementation below.
 
 ## Implementing the final code
 
@@ -129,14 +160,11 @@ Now is the time to implement the code creating the smart thumbnail. You can see 
 1. First, we will define a few constants. Replace the content of the ```Run``` method with the following attributes:
 
 ```CS
-int width = 320;
-int height = 320;
-bool smartCropping = true;
 string _apiKey = "[YOUR API KEY]";
-string _apiUrlBase = "[YOUR SERVICE URL]";
+string _apiUrlBase = "[YOUR ENDPOINT URL]";
 ```
 
-2. In the code, replace ```[YOUR API KEY]``` with the key that you obtained in the previous section. Also replace ```[YOUR SERVICE KEY]``` with the URL of the service corresponding to the key.
+2. In the code, replace ```[YOUR API KEY]``` with the key that you obtained in the previous section. Also replace ```[YOUR ENDPOINT URL]``` with the URL of the service corresponding to the key. Remember that you must add the API name ```recognizeText``` to the endpoint URL that you copied from the cognitive services dashboard.
 
 > Note: You need to use the URL of the service corresponding to the key that you obtained in the previous section. Other keys or URLs won't work.
 
@@ -152,52 +180,124 @@ using (var httpClient = new HttpClient())
 }
 ```
 
-4. In the same ```using``` block, where the comment ```CONTINUE HERE``` stands, add the following code. This creates a ```StreamContent``` that we will POST to the cognitive service.
+4. In the same ```using``` block, where the comment ```CONTINUE HERE``` stands, add the following code. This creates a ```StreamContent``` that we will POST to the cognitive service. Notice that we appended ```handwriting=true``` to give an indication to the cognitive service that the text is handwritten. You can change this to ```false``` if you want to perform recognition on non-handwritten text.
 
 ```CS
-using (HttpContent content = new StreamContent(inBlob))
+using (HttpContent content = new StreamContent(myBlob))
 {
     //get response
     content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream");
+    var uri = $"{_apiUrlBase}?handwriting=true";
+    var response = httpClient.PostAsync(uri, content).Result;
 
     // CONTINUE HERE
 }
 ```
-
-5. In that ```using``` section, near the ```CONTINUE HERE``` comment, add the code creating the URL including all the parameters. This information can be found in the [cognitive service's documentation](TODO LINK). Then we POST the image to the service and get the response asynchronously.
+5. The service is not executed immediately, but instead it returns a URL in a variable called ```Operation-Location``` which we need to read now. Replace the ```CONTINUE HERE``` comment with the following code:
 
 ```CS
-var uri = $"{_apiUrlBase}?width={width}&height={height}&smartCropping={smartCropping.ToString()}";
-var response = await httpClient.PostAsync(uri, content)t;
-var responseBytes = await response.Content.ReadAsByteArrayAsync();
+string operationLocation = null;
+
+// The response contains the URI to retrieve the result of the process.
+if (response.IsSuccessStatusCode)
+{
+    operationLocation = response.Headers.GetValues("Operation-Location").FirstOrDefault();
+}
+else
+{
+    log.Error("Operation failed");
+    return;
+}
 ```
 
-6. Finally as the last operation, we copy the output image to the output blob container with the following operation. Note how saving the blob is as simple as writing to the output Stream.
+6. Now we will ping the URL returned in the ```Operation-Location``` variable until we get a result. This is not a very friendly way to do things but thankfully the fact that we can run the Function asynchronously allows us to do this anyway:
 
 ```CS
-//write to output thumb
-outBlob.Write(responseBytes, 0, responseBytes.Length);
+string contentString;
+int i = 0;
+do
+{
+    System.Threading.Thread.Sleep(1000);
+    response = await httpClient.GetAsync(operationLocation);
+    contentString = await response.Content.ReadAsStringAsync();
+    ++i;
+}
+while (i < 10 && contentString.IndexOf("\"status\":\"Succeeded\"") == -1);
+
+if (i == 10 && contentString.IndexOf("\"status\":\"Succeeded\"") == -1)
+{
+    log.Error("\nTimeout error.\n");
+    return;
+}
+```
+
+7. As the last operation, we use a StreamWriter to write the content of the resulting JSON file to the outputBlob Stream. Because we configured this Stream to end up in the output blob container, the write operation will save everything in Azure.
+
+```CS
+using (var writer = new StreamWriter(outputBlob))
+{
+    writer.Write(contentString);
+}
 ```
 
 ## Testing the function
 
 Now we can test the function. To do this, start the [Azure Storage Explorer](https://github.com/lbugnion/sample-azure-general/blob/master/Doc/azure-explorer.md). Then follow the steps:
 
-1. Navigate to the blob container that you created earlier: ```images-original```.
+1. Navigate to the blob container that you created earlier: ```images-text```.
 
-2. Upload a picture like we did before. For example, here is an original picture:
+2. Upload a picture with handwritten text like we did before. For example, here is a picture with handwritten text:
 
-![Microsoft EVP Scott Guthrie](./Img/DSC02731.JPG)
+![Handwritten text](./Img/2017-12-03_17-03-49.png)
 
 3. Observe the log section in the web portal. After a short wait, you should see that the function is executed and succeeded.
 
-4. Using the Azure Storage Explore3r, open the ```images-thumbs``` blob container. You should find a new image there with the same name as the one you just uploaded. In our case, here is the thumbnail create by the artificial intelligence:
+4. Using the Azure Storage Explorer, open the ```images-text-out``` blob container. You should find a new file with the same name as the image you just uploaded, and the ```txt``` extension. In our case, here is the JSON created by the artificial intelligence. We can see the recognized words as well as some information about the bounding box containing the words in the picture. This can be used for example to draw a frame around the words, etc.
 
-![Microsoft EVP Scott Guthrie](./Img/DSC02731A.JPG)
+```JSON
+{
+	"status": "Succeeded",
+	"recognitionResult": {
+		"lines": [{
+			"boundingBox": [37,
+			15,
+			931,
+			60,
+			920,
+			272,
+			25,
+			251],
+			"text": "Hello Azure",
+			"words": [{
+				"boundingBox": [16,
+				27,
+				359,
+				31,
+				389,
+				257,
+				46,
+				254],
+				"text": "Hello"
+			},
+			{
+				"boundingBox": [469,
+				32,
+				940,
+				37,
+				956,
+				263,
+				498,
+				258],
+				"text": "Azure"
+			}]
+		}]
+	}
+}
+```
 
 ## Full code
 
-Here is the full code for the function. Simply copying/pasting the code below in the code window, saving, checking that the compilation succeeded and then uploading an image file to the blob container to check if the code works. Happy coding and testing!
+Here is the full code for the function. Simply copy/paste the code below in the code window, save, check that the compilation succeeded and then upload an image file to the blob container to check if the code works. Happy coding and testing!
 
 ```CS
 public static async Task Run(
@@ -206,11 +306,8 @@ public static async Task Run(
     Stream outputBlob, 
     TraceWriter log)
 {
-    int width = 320;
-    int height = 320;
-    bool smartCropping = true;
-    string _apiKey = "22b1286a2f414d3b80bcb7a0e59c9206";
-    string _apiUrlBase = "https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/generateThumbnail";
+    string _apiKey = "[YOUR API KEY]";
+    string _apiUrlBase = "[YOUR ENDPOINT URL]";
 
     using (var httpClient = new HttpClient())
     {
@@ -221,14 +318,44 @@ public static async Task Run(
         {
             //get response
             content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream");
+            var uri = $"{_apiUrlBase}?handwriting=true";
+            var response = httpClient.PostAsync(uri, content).Result;
 
-            var uri = $"{_apiUrlBase}?width={width}&height={height}&smartCropping={smartCropping.ToString()}";
-            var response = await httpClient.PostAsync(uri, content);
-            var responseBytes = await response.Content.ReadAsByteArrayAsync();
+            string operationLocation = null;
 
-            //write to output thumb
-            outputBlob.Write(responseBytes, 0, responseBytes.Length);            
-        }
-    }    
+            // The response contains the URI to retrieve the result of the process.
+            if (response.IsSuccessStatusCode)
+            {
+                operationLocation = response.Headers.GetValues("Operation-Location").FirstOrDefault();
+            }
+            else
+            {
+                log.Error("Operation failed");
+                return;
+            }
+
+            string contentString;
+            int i = 0;
+            do
+            {
+                System.Threading.Thread.Sleep(1000);
+                response = await httpClient.GetAsync(operationLocation);
+                contentString = await response.Content.ReadAsStringAsync();
+                ++i;
+            }
+            while (i < 10 && contentString.IndexOf("\"status\":\"Succeeded\"") == -1);
+
+            if (i == 10 && contentString.IndexOf("\"status\":\"Succeeded\"") == -1)
+            {
+                log.Error("\nTimeout error.\n");
+                return;
+            }
+
+            using (var writer = new StreamWriter(outputBlob))
+            {
+                writer.Write(contentString);
+            }
+       }
+    }
 }
 ```

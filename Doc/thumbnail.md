@@ -121,6 +121,10 @@ public static async Task Run(
 
 ![Log window in the Azure Portal](./Img/2017-11-30_18-37-20.png)
 
+7. Open the Azure Storage Explorer and navigate to the ```images-thumbs``` blob container. You should see a new file there which is an exact copy of the file you just uploaded.
+
+> Note: You can double click a file in the Azure Storage Explorer to open it.
+
 ## Getting the cognitive service API key and URL
 
 In order to call the Azure cognitive services, we will need a key and a URL. All the Azure services are exposed through REST URLs which are really easy to call. However we need a little bit of setup first. 
@@ -216,13 +220,13 @@ Now we can test the function. To do this, start the [Azure Storage Explorer](htt
 
 3. Observe the log section in the web portal. After a short wait, you should see that the function is executed and succeeded.
 
-4. Using the Azure Storage Explore3r, open the ```images-thumbs``` blob container. You should find a new image there with the same name as the one you just uploaded. In our case, here is the thumbnail create by the artificial intelligence:
+4. Using the Azure Storage Explorer, open the ```images-thumbs``` blob container. You should find a new image there with the same name as the one you just uploaded. In our case, here is the thumbnail created by the artificial intelligence:
 
 ![Microsoft EVP Scott Guthrie, tnumbnail](./Img/DSC02731A.JPG)
 
 ## Full code
 
-Here is the full code for the function. Simply copying/pasting the code below in the code window, saving, checking that the compilation succeeded and then uploading an image file to the blob container to check if the code works. Happy coding and testing!
+Here is the full code for the function. Simply copy/paste the code below in the code window, save, check that the compilation succeeded and then upload an image file to the blob container to check if the code works. Happy coding and testing!
 
 ```CS
 public static async Task Run(
