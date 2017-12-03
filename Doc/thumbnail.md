@@ -137,12 +137,11 @@ In order to call the Azure cognitive services, we will need a key and a URL. All
 
 5. Sign into the service. You can you a Microsoft Account (MSA), LinkedIn, Facebook or Github.
 
-6. After you are authenticated, copy the following values:
+6. After you are authenticated, copy the Key 1. You won't need the second API key here.
 
-- Endpoint
-- Key 1
+7. Also copy the Endpoint URL.
 
-You won't need the second API key here.
+> Note: In your code, you must add the ```generateThumbnail``` API name to [YOUR ENDPOINT URL]. For example a valid endpoint URL could be ```https://westcentralus.api.cognitive.microsoft.com/vision/v1.0/generateThumbnail```
 
 ![Computer Vision API settings](./Img/2017-12-01_20-20-46.png)
 
@@ -162,7 +161,7 @@ string _apiKey = "[YOUR API KEY]";
 string _apiUrlBase = "[YOUR ENDPOINT URL]";
 ```
 
-2. In the code, replace ```[YOUR API KEY]``` with the key that you obtained in the previous section. Also replace ```[YOUR ENDPOINT KEY]``` with the URL of the service corresponding to the key.
+2. In the code, replace ```[YOUR API KEY]``` with the key that you obtained in the previous section. Also replace ```[YOUR ENDPOINT URL]``` with the URL of the service corresponding to the key. Remember that you must add the API name ```generateThumbnail``` to the endpoint URL that you copied from the cognitive services dashboard.
 
 > Note: You need to use the URL of the service corresponding to the key that you obtained in the previous section. Other keys or URLs won't work.
 
