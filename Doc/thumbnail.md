@@ -139,7 +139,7 @@ In order to call the Azure cognitive services, we will need a key and a URL. All
 
 4. Agree to the terms and services, and select your region. Then click on Next
 
-5. Sign into the service. You can you a Microsoft Account (MSA), LinkedIn, Facebook or Github.
+5. Sign into the service. You can use a Microsoft Account (MSA), LinkedIn, Facebook or Github.
 
 6. After you are authenticated, copy the Key 1. You won't need the second API key here.
 
@@ -184,7 +184,7 @@ using (var httpClient = new HttpClient())
 4. In the same ```using``` block, where the comment ```CONTINUE HERE``` stands, add the following code. This creates a ```StreamContent``` that we will POST to the cognitive service.
 
 ```CS
-using (HttpContent content = new StreamContent(inBlob))
+using (HttpContent content = new StreamContent(myBlob))
 {
     //get response
     content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream");
@@ -193,11 +193,11 @@ using (HttpContent content = new StreamContent(inBlob))
 }
 ```
 
-5. In that ```using``` section, near the ```CONTINUE HERE``` comment, add the code creating the URL including all the parameters. This information can be found in the [cognitive service's documentation](TODO LINK). Then we POST the image to the service and get the response asynchronously.
+5. In that ```using``` section, near the ```CONTINUE HERE``` comment, add the code creating the URL including all the parameters. This information can be found in the [cognitive service's documentation](https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/quickstarts/csharp#GetThumbnail). Then we POST the image to the service and get the response asynchronously.
 
 ```CS
 var uri = $"{_apiUrlBase}?width={width}&height={height}&smartCropping={smartCropping.ToString()}";
-var response = await httpClient.PostAsync(uri, content)t;
+var response = await httpClient.PostAsync(uri, content);
 var responseBytes = await response.Content.ReadAsByteArrayAsync();
 ```
 
@@ -205,7 +205,7 @@ var responseBytes = await response.Content.ReadAsByteArrayAsync();
 
 ```CS
 //write to output thumb
-outBlob.Write(responseBytes, 0, responseBytes.Length);
+outputBlob.Write(responseBytes, 0, responseBytes.Length);
 ```
 
 ## Testing the function
@@ -256,8 +256,8 @@ public static async Task Run(
             var responseBytes = await response.Content.ReadAsByteArrayAsync();
 
             //write to output thumb
-            outputBlob.Write(responseBytes, 0, responseBytes.Length);            
+            outputBlob.Write(responseBytes, 0, responseBytes.Length);
         }
-    }    
+    }
 }
 ```

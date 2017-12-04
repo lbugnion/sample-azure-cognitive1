@@ -141,7 +141,7 @@ In order to call the Azure cognitive services, we will need a key and a URL. All
 
 4. Agree to the terms and services, and select your region. Then click on Next
 
-5. Sign into the service. You can you a Microsoft Account (MSA), LinkedIn, Facebook or Github.
+5. Sign into the service. You can use a Microsoft Account (MSA), LinkedIn, Facebook or Github.
 
 6. After you are authenticated, copy the Key 1. You won't need the second API key here.
 
