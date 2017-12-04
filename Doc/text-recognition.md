@@ -51,7 +51,7 @@ After you [created the function application](./creating.md), you can now create 
 
 5. Enter a name for your function, for example ```ExtractText```
 
-6. Enter the path of the Azure blob storage container. This is only for the trigger, aka the "input blob". We will configure the output blob later. In our case, we use ```images-text/{name}.txt```. Note that the ```{name}``` parameter will be the name of the file that you upload, which can be useful in the function.
+6. Enter the path of the Azure blob storage container. This is only for the trigger, aka the "input blob". We will configure the output blob later. In our case, we use ```images-text/{name}```. Note that the ```{name}``` parameter will be the name of the file that you upload, which can be useful in the function.
 
 ![Configuring the name and Path](./Img/2017-11-27_10-13-58.png)
 
@@ -121,7 +121,7 @@ public static async Task Run(
 
 6. In the Azure Portal window, check the logs again. After a short wait, you should see the log messages showing up as shown below
 
-![Log window in the Azure Portal](./Img/2017-11-30_18-37-20.png)
+![Log window in the Azure Portal](./Img/2017-12-04_14-00-02.png)
 
 7. Open the Azure Storage Explorer and navigate to the ```images-text-out``` blob container.
 
